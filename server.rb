@@ -36,7 +36,6 @@ set :port, 3001
 @git_account = 'LiftOffLLC'
 
 get '/' do
-  protected!
   logger.info "Existing data in cache: #{$cache.get_multi('configured_projects')}"
   erb :list
 end
