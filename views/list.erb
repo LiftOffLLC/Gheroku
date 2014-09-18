@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Gheroku - Build Tool</title>
+
+  <link rel="stylesheet" type="text/css" href="../default.css" />
+
+  <script src="angular.js"></script>
+  <script src="angular-resource.js"></script>
+  <script src="app.js"></script>
+  <script src="angular-route.js" ></script>
+  <script src="Underscore.js" ></script>
+
+</head>
+
+<body ng-app="hookapp">
+  <div class="wraperMain" ng-controller="mainctrl">
+   <div class="header"><!--header part-->
+    <img src="images/logo.png"/>
+    <h2 class="makeRight" style="margin-top: 40px;font-size: 1em;">Auto Deploy to Heroku, from Github Source</h2>
+  </div>
+
+  <div class="container"><!--container part-->
+    <h1>Configured Projects</h1>
+    <div class="formWhiteBg">
+      <table>
+       <tr>
+        <th><p>Github Project Name</p></th>
+        <th><p>Branch</p></th>
+        <th><p>Heroku App Name	</p></th>
+        <th><p>Last Build</p></th>
+        <th><p>Commit ID</p></th>
+        <th><p>Action</p></th>
+      </tr>
+      <tr ng-repeat="data in display_data">
+        <td>{{data.git_appname}}</td>
+        <td>
+        <div ng-controller="renameCtrl">
+        <div ng-init="updatedName = true">
+          <div ng-show="updatedName">
+            {{data.branch}}
+          </div>
+        </div>
+          <div ng-init="show = 'named'">
+            <div ng-show="show == 'named'">
+             <button ng-click="show = 'rename'; updatedName=false" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana">Edit</button>
+            </div>
+            <div ng-show="show == 'rename'">
+              <form name="renameForm">
+                <input ng-model="branch_name" style="width: 65px;" ng-required="true">
+                <input type="submit" ng-click="show = 'named'; updateNow(); updatedName=true" ng-disabled="renameForm.$invalid" value="Save" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana"/>
+              </form>
+            </div>
+          </div>
+        </div>
+        </td>
+        <td>{{data.heroku_appname}}</td>
+        <td ng-show="data.last_build">{{data.last_build | date : 'M/d hh:mm a'}} IST</td>
+        <td ng-hide="data.last_build"></td>
+        <td><a href="https://github.com/LiftOffLLC/{{data.git_appname}}/commit/{{data.sha}}" target="_new">{{data.sha}}</a></td>
+        <td><button class="deleteBtn" ng-click="delete()">Delete</button></p></td>
+      </tr>
+    </table>
+  </div>
+  <div class="black_overlay" ng-show="addnew">
+   <div class="overlay_content" style="width:590px; max-height:{{getHeight()}}px; height:{{getHeight()}}px; color:#000; background:#d3d3d3; padding:15px 15px 5px;">
+    <h2 class="m10"> Does this project has sub-projects?
+      <span style="font-size: 14px; margin-left: 20px">
+        <input type="radio" ng-model="new_form.sub_projects" value="true">Yes
+        <input type="radio" ng-model="new_form.sub_projects" value="false">No
+      </span>
+    </h2>
+    <form action="/" method="POST">
+     <table ng-hide="new_form.sub_projects" class="signuptable" style="border:0; cellpadding: 0; cellspacing:0; width:100%;">
+      <tbody>
+       <tr>
+          <td>Github Account Name</td>
+          <td><input type="text" ng-model="new_form.git_account" name="github_acc" placeholder="LiftOffLLC"/> </td>
+        </tr>
+       <tr>
+          <td>Github Project Name</td>
+          <td><input type="text" ng-model="new_form.git_appname" name="github" placeholder="AngularJS"/> </td>
+        </tr>
+        <tr>
+          <td>Heroku App Name</td>
+          <td><input type="text" ng-model="new_form.heroku" placeholder="jump-start"/></td>
+        </tr>
+      </tbody>
+    </table>
+    <table ng-show="new_form.sub_projects" class="signuptable" style="border:0; cellpadding: 0; cellspacing:0; width:100%">
+      <tbody>
+        <tr>
+          <td>Github Account Name</td>
+          <td colspan="2">
+            <input type="text" ng-model="new_form.git_account" name="github_acc" placeholder="LiftOffLLC"/>
+
+          </td>
+        </tr>
+        <tr>
+          <td>Github Project Name</td>
+          <td colspan="2">
+            <input type="text" ng-model="new_form.git_appname" name="github" placeholder="Fanoramic"/>
+          </td>
+        </tr>
+        <tr ng-repeat="project in new_form.total" ng-show="new_form.sub_projects">
+         <td><input type="text" ng-model="project.folder_name" name="folder_name1" placeholder="Sub-folder in the project"/></td>
+         <td><input type="text" ng-model="project.heroku_appname" placeholder="Heroku App Name"/></td>
+         <td><input type="text" ng-model="project.branch" placeholder="Branch Name"/></td>
+       </tr>
+       <tr>
+        <td colspan="3">
+          <a ng-click="addSub()" class="addNewBtn1" href="" ng-show="new_form.sub_projects && new_form.total.length < 3" style="margin-right: 23px; float: right; font-size: 10px">Add 1 More</a>
+        </td>
+       </tr>
+      </tbody>
+    </table>
+    <input type="button" ng-click="saveForm()" value="Save" class="saveBtn"/>
+    </form>
+    <a href="javascript:void(0)" class="overlay_close" ng-click="addnew = false"></a>
+    </div>
+  </div>
+  <div class="nePara"><button ng-click="addnew=true" class="addNewBtn1">Add New</button></div>
+</div>
+
+<div class="footer"><!--footer part-->
+  <div>
+    <div style="margin-bottom: 5px;">Contribution from folks @</div>
+    <img src="images/liftOffLogo.jpg" style="height: 20px;">
+  </div>
+</div>
+
+</div>
+
+</body>
+</html>
