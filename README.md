@@ -1,10 +1,10 @@
-# What is it #
+# About Gheroku #
 
-A simple application to auto-deploy code to Heroku whenever any code is pushed to a "Specified" branch. Currently, Github is the supported versioning system.
+Ruby based web application to auto-deploy code to Heroku whenever any code is pushed to a "Specified" branch. Currently, Github is the supported versioning system.
 
-# Installation #
+# Setting up the box for Gheroku #
 
-1. Generate SSH Keys:-
+1. Generate SSH Keys - so we can add to get Read Access to Repo
  * cd ~/.ssh
  * ssh-keygen -t rsa -C "your_email@example.com"
  * ssh-add ~/.ssh/id_rsa
@@ -29,7 +29,7 @@ A simple application to auto-deploy code to Heroku whenever any code is pushed t
 
 #Running the application#
 
-Running a Sinatra app is as easy as:
+After your have cloned Gheroku, You can run the app (it's based on Sinatra) using, if you don't have Sinatra in loccal Gemlist, might have to do "bundle install":
 
 ruby server.rb
 
