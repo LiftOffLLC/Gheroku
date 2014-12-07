@@ -27,13 +27,14 @@ def authorized?
 end
 
 set :port, 3001
-@launch_branch_name = 'launch'
-@pending_deploy = false
-@active_deploy = false
-@git_appname = nil
-@heroku_appname = nil
-@folder_name = nil
-@git_account = 'LiftOffLLC'
+$deploy_bucket = []
+# @launch_branch_name = 'launch'
+# @pending_deploy = false
+$active_deploy = false
+# @git_appname = nil
+# @heroku_appname = nil
+# @folder_name = nil
+# @git_account = 'LiftOffLLC'
 
 get '/' do
   logger.info "Existing data in cache: #{$cache.get_multi('configured_projects')}"
@@ -99,9 +100,16 @@ end
 
 post '/payload' do
   payload_data = JSON.parse(request.body.read)
-  @launch_branch_name = 'launch' #reinitializing variable here.
-  @folder_name = nil
-  @git_account = 'LiftOffLLC'
+  launch_branch_name = 'launch' #reinitializing variable here.
+  folder_name = nil
+  git_account = 'LiftOffLLC'
+
+  if $deploy_bucket.nil?
+    logger.info "bucket does not exists"
+    $deploy_bucket = []
+  else
+    logger.info "bucket exists #{$deploy_bucket}"
+  end
 
   logger.warn "Received data from Git web-hook: #{payload_data.inspect}"
   in_mem = $cache.get('configured_projects')
@@ -110,8 +118,8 @@ post '/payload' do
   if is_configured.length > 0
     to_deploy = is_configured[0]
     logger.info "Project Configuration Exists: #{to_deploy}"
-    @git_account = to_deploy[:git_account] if to_deploy.key?(:git_account)
-    @launch_branch_name = to_deploy[:branch] if to_deploy.key?(:branch)
+    git_account = to_deploy[:git_account] if to_deploy.key?(:git_account)
+    launch_branch_name = to_deploy[:branch] if to_deploy.key?(:branch)
 
     #11 is the fixed position that would have ref/heads/xxx
     branch_committedto = payload_data["ref"].slice(11,payload_data["ref"].length)
@@ -124,8 +132,8 @@ post '/payload' do
       logger.info " The sub-project detail is#{project}"
 
       if project.length > 0
-        @git_appname = to_deploy[:git_appname]
-        @heroku_appname = project[0]["heroku_appname"]
+        git_appname = to_deploy[:git_appname]
+        heroku_appname = project[0]["heroku_appname"]
         utc = Time.new.to_i
         ist_time = utc - Time.zone_offset("IST").to_i
         project[0]["last_build"] = ist_time*1000
@@ -134,8 +142,9 @@ post '/payload' do
 
         logger.info "Heroku repo found, building starts!!"
 
-        @folder_name = project[0]["folder_name"]
-        @launch_branch_name = project[0]["branch"]
+        folder_name = project[0]["folder_name"]
+        launch_branch_name = project[0]["branch"]
+        $deploy_bucket.unshift({:git_account=>git_account, :launch_branch_name=>launch_branch_name, :git_appname=>to_deploy[:git_appname], :heroku_appname=>to_deploy[:heroku_appname], :folder_name=>folder_name})
         launch_hook
       else
         logger.info "Code pushed to non launch, no need to deploy"
@@ -143,9 +152,8 @@ post '/payload' do
 
     else #Doesnt contain sub-projects
       logger.info "single app, no subprojects"
-      if branch_committedto == @launch_branch_name
-        @git_appname = to_deploy[:git_appname]
-        @heroku_appname = to_deploy[:heroku_appname]
+      if branch_committedto == launch_branch_name
+        $deploy_bucket.unshift({:git_account=>git_account, :launch_branch_name=>launch_branch_name, :git_appname=>to_deploy[:git_appname], :heroku_appname=>to_deploy[:heroku_appname], :folder_name=>folder_name})
         utc = Time.new.to_i
         ist_time = utc - Time.zone_offset("IST").to_i
         to_deploy[:last_build] = ist_time*1000
@@ -164,23 +172,29 @@ post '/payload' do
 end
 
 def launch_hook
-  if !@pending_deploy
-    @pending_deploy = true
-    scheduler = Rufus::Scheduler.new
-    scheduler.in '30s' do
+  $scheduler = Rufus::Scheduler.new if $scheduler.nil?
+  # No need to initiate new scheduler job if previous one is already running. 
+  # The running job will pick from the bucket
+  return false if !$job.nil? && $job.running?
+  # Changed 'in' to 'every'....unschedules once all buckets are deployed
+  $job = $scheduler.every '30s', :job=>true do |job|
+    if !$active_deploy && !$deploy_bucket.empty?
       deploy
-      @pending_deploy = false
+    elsif $deploy_bucket.empty?
+      job.unschedule
     end
   end
 end
 
 # put in the logic to wait for few seconds & then run
 def deploy
-  if @pending_deploy && !@active_deploy
-    @active_deploy = true
-    logger.info "Deploying code"
-    system("./deploy.sh #{@git_account} #{@launch_branch_name} #{@git_appname} #{@heroku_appname} #{@folder_name}")
-    logger.info "Now making active_deploy as false"
-    @active_deploy = false
+  $active_deploy = true
+  bucket = $deploy_bucket.last
+  unless bucket.nil?
+    logger.info "Deploying code for: #{bucket.inspect}"
+    system("./deploy.sh #{bucket[:git_account]} #{bucket[:launch_branch_name]} #{bucket[:git_appname]} #{bucket[:heroku_appname]} #{bucket[:folder_name]}")
   end
+  $deploy_bucket.pop
+  logger.info "Now making active_deploy as false"
+  $active_deploy = false
 end
