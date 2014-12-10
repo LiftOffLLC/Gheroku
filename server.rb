@@ -13,6 +13,8 @@ if existing_data.nil?
   $cache.set('configured_projects', [])
 end
 
+
+
 def protected!
   unless authorized?
     response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
@@ -145,7 +147,7 @@ post '/payload' do
         folder_name = project[0]["folder_name"]
         launch_branch_name = project[0]["branch"]
         $deploy_bucket.unshift({:git_account=>git_account, :launch_branch_name=>launch_branch_name, :git_appname=>to_deploy[:git_appname], :heroku_appname=>to_deploy[:heroku_appname], :folder_name=>folder_name})
-        launch_hook
+        # launch_hook
       else
         logger.info "Code pushed to non launch, no need to deploy"
       end
@@ -161,7 +163,7 @@ post '/payload' do
 
         $cache.set("configured_projects", in_mem)
         logger.info "Heroku repo found, building starts!!"
-        launch_hook
+        # launch_hook
       else
         logger.error "Pushed to non launch, no need to deploy"
       end
@@ -175,13 +177,13 @@ def launch_hook
   $scheduler = Rufus::Scheduler.new if $scheduler.nil?
   # No need to initiate new scheduler job if previous one is already running. 
   # The running job will pick from the bucket
-  return false if !$job.nil? && $job.running?
+  # return false if !$job.nil? && $job.running?
   # Changed 'in' to 'every'....unschedules once all buckets are deployed
   $job = $scheduler.every '30s', :job=>true do |job|
     if !$active_deploy && !$deploy_bucket.empty?
       deploy
-    elsif $deploy_bucket.empty?
-      job.unschedule
+    # elsif $deploy_bucket.empty?
+    #   job.unschedule
     end
   end
 end
@@ -191,10 +193,11 @@ def deploy
   $active_deploy = true
   bucket = $deploy_bucket.last
   unless bucket.nil?
-    logger.info "Deploying code for: #{bucket.inspect}"
+    puts "Deploying code for: #{bucket.inspect}"
     system("./deploy.sh #{bucket[:git_account]} #{bucket[:launch_branch_name]} #{bucket[:git_appname]} #{bucket[:heroku_appname]} #{bucket[:folder_name]}")
   end
   $deploy_bucket.pop
-  logger.info "Now making active_deploy as false"
+  puts "Now making active_deploy as false"
   $active_deploy = false
 end
+launch_hook
