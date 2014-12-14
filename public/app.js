@@ -16,8 +16,8 @@ hookapp.factory('repo', ['$resource', function ($resource, $scope) {
 }]);
 
 hookapp.controller('mainctrl', function($scope, repo, dateFilter){
-	$scope.new_form = {sub_projects: 'false', git_account: 'LiftOffLLC'};
-	$scope.new_form.total = [{sha:'', last_build: '', id: 1}, {sha:'', last_build: '', id: 2}];
+	$scope.new_form = {sub_projects: 'false', git_account: 'LiftOffLLC', email: ''};
+	$scope.new_form.total = [{email: '', sha:'', last_build: '', id: 1}, {email: '', sha:'', last_build: '', id: 2}];
 	$scope.addnew = false;
 
 	$scope.loadData = function(){
@@ -29,9 +29,11 @@ hookapp.controller('mainctrl', function($scope, repo, dateFilter){
 				if(proj.subproj_configs) {
 					_.each(proj.subproj_configs, function(subproj){
 						subproj.git_appname = proj.git_appname;
+            if(angular.isDefined(subproj.report_to)) subproj.email = subproj.report_to.join(",")
 						$scope.display_data.push(subproj);
 					})
 				} else {
+          if(angular.isDefined(proj.report_to)) proj.email = proj.report_to.join(",")
 					$scope.display_data.push(proj);
 				}
 			})
@@ -43,12 +45,45 @@ hookapp.controller('mainctrl', function($scope, repo, dateFilter){
     })
   }
   $scope.getHeight = function(){
-    return $scope.new_form.sub_projects == 'true'? 360+(($scope.new_form.total.length-2)*10) : 260;
+    return $scope.new_form.sub_projects == 'true'? 360+(($scope.new_form.total.length-2)*10) : 280;
+  }
+  $scope.getWidth = function(){
+    return $scope.new_form.sub_projects == 'true'? 805 : 590;
   }
   $scope.addSub = function(){
-    $scope.new_form.total.push({sha:'', last_build: '', id: $scope.new_form.total.length});
+    $scope.new_form.total.push({sha:'', last_build: '', id: $scope.new_form.total.length, email: ''});
   }
+
+  $scope.validateEmail = function(proj){
+    if(proj.email != ''){
+      var report_to = [];
+      var regex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,5}$/;
+      var email_ids = proj.email.split(',');
+      for(var e_ind in email_ids){
+        var email = email_ids[e_ind].trim();
+        if (!regex.test(email)) 
+          return false;
+        else 
+          report_to.push(email);
+      }
+      proj.report_to = report_to;
+    } else {
+      proj.report_to = [];
+    }
+    delete proj.email;
+    return true;
+  }
+
 	$scope.saveForm = function(){
+    if($scope.new_form.sub_projects == "true"){
+      for(var pro_ind in $scope.new_form.total){
+        var is_valid = $scope.validateEmail($scope.new_form.total[pro_ind]);
+        if(!is_valid) return false;
+      }
+    } else {
+      var is_valid = $scope.validateEmail($scope.new_form);
+      if(!is_valid) return false;
+    }
 		repo.addNewConfig({formdata: $scope.new_form}, function(data){
 			location.reload();
 		});
@@ -59,14 +94,20 @@ hookapp.controller('mainctrl', function($scope, repo, dateFilter){
 hookapp.controller('renameCtrl',function($scope, repo){
   // getting the existing branch name
   $scope.branch_name = $scope.data.branch;
+  $scope.email = $scope.data.email;
   // renaming the branch
   $scope.updateNow = function(){
     console.log(this.data);
     var upd_config = this.data;
     upd_config.branch = $scope.branch_name;
+    upd_config.email = $scope.email;
+    var is_valid = $scope.validateEmail(upd_config);
+    if(!is_valid) return false;
+
     repo.renameConfig(upd_config, function(flg){
       if (flg.success == true){
         $scope.data.branch = $scope.branch_name;
+        $scope.data.email = $scope.email;
       }
     });
   }

@@ -2,7 +2,11 @@ GEM
   remote: https://rubygems.org/
   specs:
     dalli (2.6.4)
+    excon (0.42.1)
     json (1.7.7)
+    mandrill-api (1.0.53)
+      excon (>= 0.16.0, < 1.0)
+      json (>= 1.7.7, < 2.0)
     rack (1.5.2)
     rack-protection (1.5.3)
       rack
@@ -23,5 +27,6 @@ PLATFORMS
 DEPENDENCIES
   dalli
   json (= 1.7.7)
+  mandrill-api
   rufus-scheduler
   sinatra (~> 1.3.5)

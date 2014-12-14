@@ -28,6 +28,7 @@
        <tr>
         <th><p>Github Project Name</p></th>
         <th><p>Branch</p></th>
+        <th><p>Email Ids</p></th>
         <th><p>Heroku App Name	</p></th>
         <th><p>Last Build</p></th>
         <th><p>Commit ID</p></th>
@@ -36,24 +37,44 @@
       <tr ng-repeat="data in display_data">
         <td>{{data.git_appname}}</td>
         <td>
-        <div ng-controller="renameCtrl">
-        <div ng-init="updatedName = true">
-          <div ng-show="updatedName">
-            {{data.branch}}
-          </div>
-        </div>
-          <div ng-init="show = 'named'">
-            <div ng-show="show == 'named'">
-             <button ng-click="show = 'rename'; updatedName=false" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana">Edit</button>
+          <div ng-controller="renameCtrl">
+            <div ng-init="updatedName = true">
+              <div ng-show="updatedName">
+                {{data.branch}}
+              </div>
             </div>
-            <div ng-show="show == 'rename'">
-              <form name="renameForm">
-                <input ng-model="branch_name" style="width: 65px;" ng-required="true">
-                <input type="submit" ng-click="show = 'named'; updateNow(); updatedName=true" ng-disabled="renameForm.$invalid" value="Save" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana"/>
-              </form>
+            <div ng-init="show = 'named'">
+              <div ng-show="show == 'named'">
+               <button ng-click="show = 'rename'; updatedName=false" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana">Edit</button>
+              </div>
+              <div ng-show="show == 'rename'">
+                <form name="renameForm">
+                  <input ng-model="branch_name" style="width: 65px;" ng-required="true">
+                  <input type="submit" ng-click="show = 'named'; updateNow(); updatedName=true" ng-disabled="renameForm.$invalid" value="Save" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana"/>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
+        </td>
+        <td>
+          <div ng-controller="renameCtrl">
+            <div ng-init="updatedName = true">
+              <div ng-show="updatedName">
+                {{data.email}}
+              </div>
+            </div>
+            <div ng-init="show = 'named'">
+              <div ng-show="show == 'named'">
+               <button ng-click="show = 'rename'; updatedName=false" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana">Edit</button>
+              </div>
+              <div ng-show="show == 'rename'">
+                <form name="renameForm">
+                  <input ng-model="email" style="width: 65px;" ng-required="true">
+                  <input type="submit" ng-click="show = 'named'; updateNow(); updatedName=true" ng-disabled="renameForm.$invalid" value="Save" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana"/>
+                </form>
+              </div>
+            </div>
+          </div>
         </td>
         <td>{{data.heroku_appname}}</td>
         <td ng-show="data.last_build">{{data.last_build | date : 'M/d hh:mm a'}} IST</td>
@@ -64,7 +85,7 @@
     </table>
   </div>
   <div class="black_overlay" ng-show="addnew">
-   <div class="overlay_content" style="width:590px; max-height:{{getHeight()}}px; height:{{getHeight()}}px; color:#000; background:#d3d3d3; padding:15px 15px 5px;">
+   <div class="overlay_content" style="width:{{getWidth()}}px; max-height:{{getHeight()}}px; height:{{getHeight()}}px; color:#000; background:#d3d3d3; padding:15px 15px 5px;">
     <h2 class="m10"> Does this project has sub-projects?
       <span style="font-size: 14px; margin-left: 20px">
         <input type="radio" ng-model="new_form.sub_projects" value="true">Yes
@@ -85,6 +106,10 @@
         <tr>
           <td>Heroku App Name</td>
           <td><input type="text" ng-model="new_form.heroku" placeholder="jump-start"/></td>
+        </tr>
+        <tr>
+          <td>Email</td>
+          <td><input type="text" ng-model="new_form.email" placeholder="Separate by commas for multiple emails"/></td>
         </tr>
       </tbody>
     </table>
@@ -107,6 +132,7 @@
          <td><input type="text" ng-model="project.folder_name" name="folder_name1" placeholder="Sub-folder in the project"/></td>
          <td><input type="text" ng-model="project.heroku_appname" placeholder="Heroku App Name"/></td>
          <td><input type="text" ng-model="project.branch" placeholder="Branch Name"/></td>
+         <td><input type="text" ng-model="project.email" placeholder="Email separated by comma"/></td>
        </tr>
        <tr>
         <td colspan="3">

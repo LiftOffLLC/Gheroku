@@ -2,6 +2,10 @@ require 'sinatra'
 require 'json'
 require 'rufus-scheduler'
 require 'rack/session/dalli'
+require 'mandrill'
+require 'rest_client'
+
+$mandrill = Mandrill::API.new 'we_4e96NxNZ77X8JP2ydGg'
 
 memcache_url = 'dev.cb.buildtool.com'
 
@@ -69,10 +73,12 @@ put '/update_branch' do
           if sub_app["heroku_appname"] == input_hash["heroku_appname"]
             logger.info("Updated sub_project branch name")
             sub_app["branch"] = input_hash["branch"]
+            sub_app["report_to"] = input_hash["report_to"]
           end
         }
       else
         app[:branch] = input_hash["branch"]
+        app[:report_to] = input_hash["report_to"]
       end
     end
   }
@@ -95,7 +101,7 @@ post '/new_form' do
     in_mem.push({:git_account => input_data["git_account"], :sub_projects => true, :subproj_configs => input_data["total"], :git_appname => input_data["git_appname"]})
   else
     logger.info "single app, no sub-projects exist"
-    in_mem.push({:git_account => input_data["git_account"],:git_appname =>input_data["git_appname"], :heroku_appname => input_data["heroku"], :last_build => nil, :sha => nil, :branch => "launch"})
+    in_mem.push({:git_account => input_data["git_account"],:git_appname =>input_data["git_appname"], :heroku_appname => input_data["heroku"], :last_build => nil, :sha => nil, :branch => "launch", :report_to => input_data["report_to"]})
   end
   $cache.set("configured_projects", in_mem)
 end
@@ -104,6 +110,7 @@ post '/payload' do
   payload_data = JSON.parse(request.body.read)
   launch_branch_name = 'launch' #reinitializing variable here.
   folder_name = nil
+  report_to = []
   git_account = 'LiftOffLLC'
 
   if $deploy_bucket.nil?
@@ -146,7 +153,8 @@ post '/payload' do
 
         folder_name = project[0]["folder_name"]
         launch_branch_name = project[0]["branch"]
-        $deploy_bucket.unshift({:git_account=>git_account, :launch_branch_name=>launch_branch_name, :git_appname=>to_deploy[:git_appname], :heroku_appname=>to_deploy[:heroku_appname], :folder_name=>folder_name})
+        report_to = project[0]["report_to"]
+        $deploy_bucket.unshift({:git_account=>git_account, :launch_branch_name=>launch_branch_name, :git_appname=>to_deploy[:git_appname], :heroku_appname=>to_deploy[:heroku_appname], :folder_name=>folder_name, :report_to=>report_to})
         # launch_hook
       else
         logger.info "Code pushed to non launch, no need to deploy"
@@ -155,7 +163,7 @@ post '/payload' do
     else #Doesnt contain sub-projects
       logger.info "single app, no subprojects"
       if branch_committedto == launch_branch_name
-        $deploy_bucket.unshift({:git_account=>git_account, :launch_branch_name=>launch_branch_name, :git_appname=>to_deploy[:git_appname], :heroku_appname=>to_deploy[:heroku_appname], :folder_name=>folder_name})
+        $deploy_bucket.unshift({:git_account=>git_account, :launch_branch_name=>launch_branch_name, :git_appname=>to_deploy[:git_appname], :heroku_appname=>to_deploy[:heroku_appname], :folder_name=>folder_name, :report_to=>to_deploy[:report_to]})
         utc = Time.new.to_i
         ist_time = utc - Time.zone_offset("IST").to_i
         to_deploy[:last_build] = ist_time*1000
@@ -191,13 +199,32 @@ end
 # put in the logic to wait for few seconds & then run
 def deploy
   $active_deploy = true
-  bucket = $deploy_bucket.last
+  bucket = JSON.parse($deploy_bucket.last.to_json)
   unless bucket.nil?
     puts "Deploying code for: #{bucket.inspect}"
-    system("./deploy.sh #{bucket[:git_account]} #{bucket[:launch_branch_name]} #{bucket[:git_appname]} #{bucket[:heroku_appname]} #{bucket[:folder_name]}")
+    system("./deploy.sh #{bucket['git_account']} #{bucket['launch_branch_name']} #{bucket['git_appname']} #{bucket['heroku_appname']} #{bucket['folder_name']}")
   end
   $deploy_bucket.pop
   puts "Now making active_deploy as false"
   $active_deploy = false
+  check_build bucket
+end
+
+def check_build(build)
+  build = JSON.parse(build.to_json)
+  url = "https://api.heroku.com/apps/#{build['heroku_appname']}/builds"
+  response = JSON.parse(RestClient.get url, "Accept"=>"application/vnd.heroku+json;version=3").last
+  return false if(build["report_to"].nil? || build["report_to"].empty?)
+  puts "Sending email reports to #{build['report_to']}"
+  email_arr = []
+  build["report_to"].each { |email|  
+    email_arr.push({"email"=>email})
+  }
+  if(response["status"] == "succeeded")
+    message = {"html"=>"<p>Build Status: Successfull</p><p> Build Id: #{response['id']}</p><p>Deployed At: #{response['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+  else
+    message = {"html"=>"<p>Build Status: Failed</p><p> Build Id: #{response['id']}</p><p>Attempted At: #{response['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+  end
+  result = $mandrill.messages.send message
 end
 launch_hook
