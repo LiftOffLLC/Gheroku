@@ -4,6 +4,7 @@ require 'rufus-scheduler'
 require 'rack/session/dalli'
 require 'mandrill'
 require 'rest_client'
+require 'time'
 
 $mandrill = Mandrill::API.new 'we_4e96NxNZ77X8JP2ydGg'
 
@@ -214,6 +215,8 @@ def check_build(build)
   build = JSON.parse(build.to_json)
   url = "https://api.heroku.com/apps/#{build['heroku_appname']}/builds"
   response = JSON.parse(RestClient.get url, "Accept"=>"application/vnd.heroku+json;version=3").last
+  time_now = Time.now().to_i
+  created_at = Time.parse(response['created_at']).to_i
   return false if(build["report_to"].nil? || build["report_to"].empty?)
   puts "Sending email reports to #{build['report_to']}"
   email_arr = []
@@ -221,7 +224,11 @@ def check_build(build)
     email_arr.push({"email"=>email})
   }
   if(response["status"] == "succeeded")
-    message = {"html"=>"<p>Build Status: Successfull</p><p> Build Id: #{response['id']}</p><p>Deployed At: #{response['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+    if created_at+(15*60) > time_now
+      message = {"html"=>"<p>Build Status: Successfull</p><p> Build Id: #{response['id']}</p><p>Deployed At: #{response['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+    else
+      message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p> Last Build Id: #{response['id']}</p><p>Last Deployed At: #{response['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+    end
   else
     message = {"html"=>"<p>Build Status: Failed</p><p> Build Id: #{response['id']}</p><p>Attempted At: #{response['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
   end

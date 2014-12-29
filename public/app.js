@@ -1,4 +1,4 @@
-var hookapp = angular.module('hookapp', ['ngResource']);
+var hookapp = angular.module('hookapp', ['ngResource', 'lumx']);
 
 hookapp.factory('repo', ['$resource', function ($resource, $scope) {
   //REST-API for the user is invoked from here
@@ -15,10 +15,15 @@ hookapp.factory('repo', ['$resource', function ($resource, $scope) {
   return Repo;
 }]);
 
-hookapp.controller('mainctrl', function($scope, repo, dateFilter){
+hookapp.controller('mainctrl', function($scope, repo, dateFilter, LxDialogService){
 	$scope.new_form = {sub_projects: 'false', git_account: 'LiftOffLLC', email: ''};
 	$scope.new_form.total = [{email: '', sha:'', last_build: '', id: 1}, {email: '', sha:'', last_build: '', id: 2}];
 	$scope.addnew = false;
+
+  $scope.opendDialog = function(dialogId, project_data){
+    $scope.project_data = project_data;
+    LxDialogService.open(dialogId);
+  };
 
 	$scope.loadData = function(){
 		repo.getExistingConfig(function(data){

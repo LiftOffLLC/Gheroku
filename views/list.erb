@@ -4,13 +4,23 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <title>Gheroku - Build Tool</title>
 
+  <link rel="stylesheet" type="text/css" href="../lumx.css" />
   <link rel="stylesheet" type="text/css" href="../default.css" />
 
+  <script src="jquery.js"></script>
+  <script src="jquery.transit.js"></script>
+  <script src="velocity.js"></script>
+  <script src="highlight.pack.js"></script>
+  <script src="moment-with-locales.js"></script>
+  <script src="Underscore.js" ></script>
   <script src="angular.js"></script>
   <script src="angular-resource.js"></script>
-  <script src="app.js"></script>
   <script src="angular-route.js" ></script>
-  <script src="Underscore.js" ></script>
+  <script src="angular-highlightjs.js"></script>
+
+  <script src="lumx.js"></script>
+
+  <script src="app.js"></script>
 
 </head>
 
@@ -23,66 +33,178 @@
 
   <div class="container"><!--container part-->
     <h1>Configured Projects</h1>
-    <div class="formWhiteBg">
-      <table>
-       <tr>
-        <th><p>Github Project Name</p></th>
-        <th><p>Branch</p></th>
-        <th><p>Email Ids</p></th>
-        <th><p>Heroku App Name	</p></th>
-        <th><p>Last Build</p></th>
-        <th><p>Commit ID</p></th>
-        <th><p>Action</p></th>
-      </tr>
-      <tr ng-repeat="data in display_data">
-        <td>{{data.git_appname}}</td>
-        <td>
-          <div ng-controller="renameCtrl">
-            <div ng-init="updatedName = true">
-              <div ng-show="updatedName">
-                {{data.branch}}
+    <div class="data-table-container">
+      <table class="data-table data-table--has-primary data-table--has-secondary">
+        <thead>
+          <tr>
+          <th>Project</th>
+          <th>Branch</th>
+          <th>Email Ids</th>
+          <th>Heroku App</th>
+          <th>Action</th>
+          </tr>
+        </thead>
+      <tbody>
+        <tr ng-repeat="data in display_data" class="data-table">
+          <td>{{data.git_appname}}</td>
+          <td>
+            <div ng-controller="renameCtrl">
+              <div ng-init="updatedName = true">
+                <div ng-show="updatedName">
+                  {{data.branch}}
+                </div>
               </div>
+              <!-- <div ng-init="show = 'named'">
+                <div ng-show="show == 'named'">
+                 <button ng-click="show = 'rename'; updatedName=false" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana">Edit</button>
+                </div>
+                <div ng-show="show == 'rename'">
+                  <form name="renameForm">
+                    <input ng-model="branch_name" style="width: 65px;" ng-required="true">
+                    <input type="submit" ng-click="show = 'named'; updateNow(); updatedName=true" ng-disabled="renameForm.$invalid" value="Save" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana"/>
+                  </form>
+                </div>
+              </div> -->
             </div>
-            <div ng-init="show = 'named'">
-              <div ng-show="show == 'named'">
-               <button ng-click="show = 'rename'; updatedName=false" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana">Edit</button>
+          </td>
+          <td>
+            <lx-dropdown position="left" from-top ng-show="data.report_to && data.report_to.length > 1">
+              <button class="btn btn--l btn--black btn--icon" lx-ripple lx-dropdown-toggle style="-ms-transform: rotate(90deg);-webkit-transform: rotate(90deg);transform: rotate(90deg);">
+                <i class="mdi mdi--more-vert"></i>
+              </button>
+
+              <lx-dropdown-menu>
+                <ul>
+                  <li ng-repeat="email in data.report_to"><span style="cursor:default;" class="dropdown-link" ng-bind="email"></span></li>
+                </ul>
+              </lx-dropdown-menu>
+            </lx-dropdown>
+            <div ng-controller="renameCtrl" ng-show="data.report_to && data.report_to.length == 1">
+              <div ng-init="updatedName = true">
+                <div ng-show="updatedName">
+                  {{data.report_to[0]}}
+                </div>
               </div>
-              <div ng-show="show == 'rename'">
-                <form name="renameForm">
-                  <input ng-model="branch_name" style="width: 65px;" ng-required="true">
-                  <input type="submit" ng-click="show = 'named'; updateNow(); updatedName=true" ng-disabled="renameForm.$invalid" value="Save" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana"/>
-                </form>
-              </div>
+              <!-- <div ng-init="show = 'named'">
+                <div ng-show="show == 'named'">
+                 <button ng-click="show = 'rename'; updatedName=false" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana">Edit</button>
+                </div>
+                <div ng-show="show == 'rename'">
+                  <form name="renameForm">
+                    <input ng-model="email" style="width: 65px;" ng-required="true">
+                    <input type="submit" ng-click="show = 'named'; updateNow(); updatedName=true" ng-disabled="renameForm.$invalid" value="Save" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana"/>
+                  </form>
+                </div>
+              </div> -->
             </div>
-          </div>
-        </td>
-        <td>
-          <div ng-controller="renameCtrl">
-            <div ng-init="updatedName = true">
-              <div ng-show="updatedName">
-                {{data.email}}
-              </div>
-            </div>
-            <div ng-init="show = 'named'">
-              <div ng-show="show == 'named'">
-               <button ng-click="show = 'rename'; updatedName=false" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana">Edit</button>
-              </div>
-              <div ng-show="show == 'rename'">
-                <form name="renameForm">
-                  <input ng-model="email" style="width: 65px;" ng-required="true">
-                  <input type="submit" ng-click="show = 'named'; updateNow(); updatedName=true" ng-disabled="renameForm.$invalid" value="Save" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana"/>
-                </form>
-              </div>
-            </div>
-          </div>
-        </td>
-        <td>{{data.heroku_appname}}</td>
-        <td ng-show="data.last_build">{{data.last_build | date : 'M/d hh:mm a'}} IST</td>
-        <td ng-hide="data.last_build"></td>
-        <td><a href="https://github.com/LiftOffLLC/{{data.git_appname}}/commit/{{data.sha}}" target="_new">{{data.sha}}</a></td>
-        <td><button class="deleteBtn" ng-click="delete()">Delete</button></p></td>
-      </tr>
+          </td>
+          <td>{{data.heroku_appname}}</td>
+          <td>
+            <lx-dropdown position="right" from-top>
+              <button class="btn btn--l btn--black btn--icon" lx-ripple lx-dropdown-toggle>
+                <i class="mdi mdi--more-vert"></i>
+              </button>
+
+              <lx-dropdown-menu>
+                <ul>
+                  <li><a class="dropdown-link" ng-click="delete()">Delete</a></li>
+                  <li><a class="dropdown-link" ng-click="opendDialog('projectDetail', data)">View Details</a></li>
+                </ul>
+              </lx-dropdown-menu>
+            </lx-dropdown>
+          </td>
+        </tr>
+      </tbody>
     </table>
+  </div>
+  <div class="dialog dialog--l" id="projectDetail" lx-dialog>
+    <div class="dialog__header bgc-light-blue-500">
+        <div class="toolbar">
+            <div class="toolbar__left mr-">
+                <button class="btn btn--l btn--white btn--icon" lx-ripple>
+                    <i class="mdi mdi--menu"></i>
+                </button>
+            </div>
+
+            <strong class="toolbar__label tc-white" ng-bind="project_data.git_appname"></strong>
+
+            <div class="toolbar__right">
+                <button class="btn btn--l btn--white btn--icon" style="-ms-transform: rotate(45deg);-webkit-transform: rotate(45deg);transform: rotate(45deg);" lx-ripple lx-dialog-close>
+                    <i class="mdi mdi--add"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dialog__content p">
+      <div class="grid">
+        <div class="grid__col6">
+          <ul class="list">
+                <li class="list-row list-row--has-primary list-row--has-separator">
+
+                      <div class="list-content-tile list-content-tile--two-lines">
+                            <strong>Git Hub Project Name</strong>
+                            <span ng-bind="project_data.git_appname"></span>
+                      </div>
+                </li>
+
+                <li class="list-row list-row--has-primary list-row--has-separator">
+
+                      <div class="list-content-tile list-content-tile--two-lines">
+                            <strong>Listening Branch</strong>
+                            <span ng-bind="project_data.branch"></span>
+                      </div>
+                </li>
+
+                <li class="list-row list-row--has-primary list-row--has-separator">
+
+                      <div class="list-content-tile list-content-tile--two-lines">
+                            <strong>Heroku App</strong>
+                            <span ng-bind="project_data.heroku_appname"></span>
+                      </div>
+                </li>
+
+                <li class="list-row list-row--has-primary list-row--has-separator" ng-show="project_data.sha">
+
+                      <div class="list-content-tile list-content-tile--two-lines">
+                            <strong>Last Commit</strong>
+                            <a href="https://github.com/{{project_data.git_account}}/{{project_data.git_appname}}/commit/{{project_data.sha}}" target="_new" ng-bind="project_data.sha"></a>
+                      </div>
+                </li>
+
+                <li class="list-row list-row--has-primary list-row--has-separator" ng-show="project_data.last_build">
+
+                      <div class="list-content-tile list-content-tile--two-lines">
+                            <strong>Last Updated</strong>
+                            <span ng-bind="project_data.last_build | date : 'M/d hh:mm a'"></span>
+                      </div>
+                </li>
+          </ul>
+        </div>
+        <div class="grid__col6">
+          <ul class="list">
+            <li class="list-row list-row--has-primary list-row--has-separator">
+              <div class="list-content-tile list-content-tile--two-lines">
+                <strong>Report Build Statuses To</strong>
+                <span>
+                  <ul class="list">
+                    <li class="list-row list-row--has-primary" ng-repeat="email in project_data.report_to">
+                      <div class="list-primary-tile">
+                        <i class="icon icon--l icon--grey icon--flat mdi mdi--send"></i>
+                      </div>
+
+                      <div class="list-content-tile list-content-tile--one-line">
+                        <strong ng-bind="email"></strong>
+                      </div>
+                    </li>
+                  </ul>
+                </span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="black_overlay" ng-show="addnew">
    <div class="overlay_content" style="width:{{getWidth()}}px; max-height:{{getHeight()}}px; height:{{getHeight()}}px; color:#000; background:#d3d3d3; padding:15px 15px 5px;">
@@ -93,7 +215,7 @@
       </span>
     </h2>
     <form action="/" method="POST">
-     <table ng-hide="new_form.sub_projects" class="signuptable" style="border:0; cellpadding: 0; cellspacing:0; width:100%;">
+     <table ng-show="new_form.sub_projects == 'false'" class="signuptable" style="border:0; cellpadding: 0; cellspacing:0; width:100%;">
       <tbody>
        <tr>
           <td>Github Account Name</td>
@@ -113,7 +235,7 @@
         </tr>
       </tbody>
     </table>
-    <table ng-show="new_form.sub_projects" class="signuptable" style="border:0; cellpadding: 0; cellspacing:0; width:100%">
+    <table ng-show="new_form.sub_projects == 'true'" class="signuptable" style="border:0; cellpadding: 0; cellspacing:0; width:100%">
       <tbody>
         <tr>
           <td>Github Account Name</td>
@@ -128,7 +250,7 @@
             <input type="text" ng-model="new_form.git_appname" name="github" placeholder="Fanoramic"/>
           </td>
         </tr>
-        <tr ng-repeat="project in new_form.total" ng-show="new_form.sub_projects">
+        <tr ng-repeat="project in new_form.total">
          <td><input type="text" ng-model="project.folder_name" name="folder_name1" placeholder="Sub-folder in the project"/></td>
          <td><input type="text" ng-model="project.heroku_appname" placeholder="Heroku App Name"/></td>
          <td><input type="text" ng-model="project.branch" placeholder="Branch Name"/></td>
@@ -136,7 +258,7 @@
        </tr>
        <tr>
         <td colspan="3">
-          <a ng-click="addSub()" class="addNewBtn1" href="" ng-show="new_form.sub_projects && new_form.total.length < 3" style="margin-right: 23px; float: right; font-size: 10px">Add 1 More</a>
+          <a ng-click="addSub()" class="addNewBtn1" href="" ng-show="new_form.total.length < 3" style="margin-right: 23px; float: right; font-size: 10px">Add 1 More</a>
         </td>
        </tr>
       </tbody>
