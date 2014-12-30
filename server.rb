@@ -68,9 +68,9 @@ put '/update_branch' do
   in_mem = $cache.get('configured_projects')
 
   in_mem.each{|app|
-    if app[:git_appname] == input_hash["git_appname"]
-      if app[:sub_projects]
-        app[:subproj_configs].each{ |sub_app|
+    if app["git_appname"] == input_hash["git_appname"]
+      if !app["sub_projects"].nil? && app["sub_projects"]
+        app["subproj_configs"].each{ |sub_app|
           if sub_app["heroku_appname"] == input_hash["heroku_appname"]
             logger.info("Updated sub_project branch name")
             sub_app["branch"] = input_hash["branch"]
@@ -78,8 +78,8 @@ put '/update_branch' do
           end
         }
       else
-        app[:branch] = input_hash["branch"]
-        app[:report_to] = input_hash["report_to"]
+        app["branch"] = input_hash["branch"]
+        app["report_to"] = input_hash["report_to"]
       end
     end
   }
@@ -99,63 +99,45 @@ post '/new_form' do
 
   if input_data["sub_projects"]
     logger.info "sub projects exist"
-    in_mem.push({:git_account => input_data["git_account"], :sub_projects => true, :subproj_configs => input_data["total"], :git_appname => input_data["git_appname"]})
+    in_mem.push({"git_account" => input_data["git_account"], "sub_projects" => true, "subproj_configs" => input_data["total"], "git_appname" => input_data["git_appname"]})
   else
     logger.info "single app, no sub-projects exist"
-    in_mem.push({:git_account => input_data["git_account"],:git_appname =>input_data["git_appname"], :heroku_appname => input_data["heroku"], :last_build => nil, :sha => nil, :branch => input_data["branch"], :report_to => input_data["report_to"]})
+    in_mem.push({"git_account" => input_data["git_account"], "git_appname" =>input_data["git_appname"], "heroku_appname" => input_data["heroku"], "branch" => input_data["branch"], "report_to" => input_data["report_to"]})
   end
   $cache.set("configured_projects", in_mem)
 end
 
 post '/payload' do
   payload_data = JSON.parse(request.body.read)
-  launch_branch_name = 'launch' #reinitializing variable here.
-  folder_name = nil
-  report_to = []
-  git_account = 'LiftOffLLC'
-
-  if $deploy_bucket.nil?
-    logger.info "bucket does not exists"
-    $deploy_bucket = []
-  else
-    logger.info "bucket exists #{$deploy_bucket}"
-  end
 
   logger.warn "Received data from Git web-hook: #{payload_data.inspect}"
-  in_mem = $cache.get('configured_projects')
-  is_configured = in_mem.select {|p| p[:git_appname].to_s.downcase == payload_data["repository"]["name"].to_s.downcase}
+  in_mem = JSON.parse($cache.get('configured_projects').to_json)
+  is_configured = in_mem.select {|p| p["git_appname"].to_s.downcase == payload_data["repository"]["name"].to_s.downcase}
 
   if is_configured.length > 0
     to_deploy = is_configured[0]
     logger.info "Project Configuration Exists: #{to_deploy}"
-    git_account = to_deploy[:git_account] if to_deploy.key?(:git_account)
-    launch_branch_name = to_deploy[:branch] if to_deploy.key?(:branch)
 
     #11 is the fixed position that would have ref/heads/xxx
     branch_committedto = payload_data["ref"].slice(11,payload_data["ref"].length)
     logger.info "Code committed to branch: #{branch_committedto}"
 
-    if !to_deploy[:subproj_configs].nil? && to_deploy[:subproj_configs].length > 0
+    if !to_deploy["sub_projects"].nil? && to_deploy["sub_projects"]
       logger.info "subprojects found"
 
-      project = to_deploy[:subproj_configs].select{ |q| branch_committedto == q["branch"].to_s }
+      project = to_deploy["subproj_configs"].select{ |q| branch_committedto == q["branch"].to_s }
       logger.info " The sub-project detail is#{project}"
 
       if project.length > 0
-        git_appname = to_deploy[:git_appname]
-        heroku_appname = project[0]["heroku_appname"]
         utc = Time.new.to_i
         ist_time = utc - Time.zone_offset("IST").to_i
-        project[0]["last_build"] = ist_time*1000
-        project[0]["sha"] = payload_data["after"]
+        project[0][:last_build] = ist_time*1000
+        project[0][:sha] = payload_data["after"]
         $cache.set("configured_projects", in_mem)
 
         logger.info "Heroku repo found, building starts!!"
 
-        folder_name = project[0]["folder_name"]
-        launch_branch_name = project[0]["branch"]
-        report_to = project[0]["report_to"]
-        $deploy_bucket.unshift({:git_account=>git_account, :launch_branch_name=>launch_branch_name, :git_appname=>to_deploy[:git_appname], :heroku_appname=>to_deploy[:heroku_appname], :folder_name=>folder_name, :report_to=>report_to})
+        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>project[0]["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>to_deploy["heroku_appname"], :folder_name=>project[0]["folder_name"], :report_to=>project[0]["report_to"]})
         # launch_hook
       else
         logger.info "Code pushed to non launch, no need to deploy"
@@ -163,12 +145,12 @@ post '/payload' do
 
     else #Doesnt contain sub-projects
       logger.info "single app, no subprojects"
-      if branch_committedto == launch_branch_name
-        $deploy_bucket.unshift({:git_account=>git_account, :launch_branch_name=>launch_branch_name, :git_appname=>to_deploy[:git_appname], :heroku_appname=>to_deploy[:heroku_appname], :folder_name=>folder_name, :report_to=>to_deploy[:report_to]})
+      if branch_committedto == to_deploy["branch"]
         utc = Time.new.to_i
         ist_time = utc - Time.zone_offset("IST").to_i
         to_deploy[:last_build] = ist_time*1000
         to_deploy[:sha] = payload_data["after"]
+        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>to_deploy["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>to_deploy["heroku_appname"], :folder_name=>nil, :report_to=>to_deploy["report_to"]})
 
         $cache.set("configured_projects", in_mem)
         logger.info "Heroku repo found, building starts!!"

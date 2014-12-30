@@ -21,7 +21,7 @@ hookapp.controller('mainctrl', function($scope, repo, dateFilter, LxDialogServic
 	$scope.addnew = false;
 
   $scope.opendDialog = function(dialogId, project_data){
-    $scope.project_data = project_data;
+    $scope.project_data = angular.copy(project_data);
     LxDialogService.open(dialogId);
   };
 
@@ -67,6 +67,35 @@ hookapp.controller('mainctrl', function($scope, repo, dateFilter, LxDialogServic
     return (typeof element === "undefined" || element === null || $.trim(element) === '');
   }
 
+  $scope.removeEmail = function(index){
+    $scope.project_data.report_to.splice(index, 1)
+    $scope.project_data.email = $scope.project_data.report_to.join(",")
+    $scope.updateNow();
+  }
+
+  $scope.addEmail = function(){
+    if($scope.isEmpty($scope.project_data.report_to)) $scope.project_data.report_to = [];
+    $scope.project_data.report_to.push(this.new_email)
+    $scope.project_data.email = $scope.project_data.report_to.join(",")
+    
+    var is_valid = $scope.validateEmail($scope.project_data);
+    if(!is_valid) return false;
+
+    $scope.updateNow();
+    this.new_email = ''
+  }
+
+  $scope.updateNow = function(){
+    console.log($scope.project_data);
+
+    repo.renameConfig($scope.project_data, function(flg){
+      if (flg.success == true){
+        var project_ind = $scope.display_data.indexOf(_.findWhere($scope.display_data, {heroku_appname: $scope.project_data.heroku_appname}))
+        $scope.display_data[project_ind] = $scope.project_data;
+      }
+    });
+  }
+
   $scope.validateEmail = function(proj){
     if(proj.email != ''){
       var report_to = [];
@@ -83,7 +112,6 @@ hookapp.controller('mainctrl', function($scope, repo, dateFilter, LxDialogServic
     } else {
       proj.report_to = [];
     }
-    delete proj.email;
     return true;
   }
 
@@ -103,6 +131,25 @@ hookapp.controller('mainctrl', function($scope, repo, dateFilter, LxDialogServic
   }
   $scope.loadData();
 })
+
+hookapp.directive('focus', function(){
+  return {
+    restrict: 'A',
+    link: function(scope, elm, attr){
+      elm.click(function(){
+        $(attr.focus).focus();
+      })
+    }
+  }
+})
+
+hookapp.filter("isEmpty", function(){
+
+  return function(element){
+
+    return (typeof element === "undefined" || element === null || $.trim(element) === '')
+  };
+});
 
 hookapp.controller('renameCtrl',function($scope, repo){
   // getting the existing branch name

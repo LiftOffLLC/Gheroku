@@ -125,73 +125,71 @@
       </tbody>
     </table>
   </div>
-  <div class="dialog dialog--l" id="projectDetail" lx-dialog>
+  <div class="dialog dialog--l" id="projectDetail" style="overflow:auto;" lx-dialog>
     <div class="dialog__header bgc-light-blue-500">
-        <div class="toolbar">
-            <div class="toolbar__left mr-">
-                <button class="btn btn--l btn--white btn--icon" lx-ripple>
-                    <i class="mdi mdi--menu"></i>
-                </button>
-            </div>
-
-            <strong class="toolbar__label tc-white" ng-bind="project_data.git_appname"></strong>
-
-            <div class="toolbar__right">
-                <button class="btn btn--l btn--white btn--icon" style="-ms-transform: rotate(45deg);-webkit-transform: rotate(45deg);transform: rotate(45deg);" lx-ripple lx-dialog-close>
-                    <i class="mdi mdi--add"></i>
-                </button>
-            </div>
+      <div class="toolbar">
+        <div class="toolbar__left mr-">
+          <button class="btn btn--l btn--white btn--icon" lx-ripple>
+            <i class="mdi mdi--menu"></i>
+          </button>
         </div>
+
+        <strong class="toolbar__label tc-white" ng-bind="project_data.git_appname"></strong>
+
+        <div class="toolbar__right">
+          <button class="btn btn--l btn--white btn--icon" style="-ms-transform: rotate(45deg);-webkit-transform: rotate(45deg);transform: rotate(45deg);" lx-ripple lx-dialog-close>
+            <i class="mdi mdi--add"></i>
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="dialog__content p">
       <div class="grid">
         <div class="grid__col6">
           <ul class="list">
-                <li class="list-row list-row--has-primary list-row--has-separator">
-
-                      <div class="list-content-tile list-content-tile--two-lines">
-                            <strong>Git Hub Project Name</strong>
-                            <span ng-bind="project_data.git_appname"></span>
-                      </div>
-                </li>
-
-                <li class="list-row list-row--has-primary list-row--has-separator">
-
-                      <div class="list-content-tile list-content-tile--two-lines">
-                            <strong>Listening Branch</strong>
-                            <span ng-bind="project_data.branch"></span>
-                      </div>
-                </li>
-
-                <li class="list-row list-row--has-primary list-row--has-separator">
-
-                      <div class="list-content-tile list-content-tile--two-lines">
-                            <strong>Heroku App</strong>
-                            <span ng-bind="project_data.heroku_appname"></span>
-                      </div>
-                </li>
-
-                <li class="list-row list-row--has-primary list-row--has-separator" ng-show="project_data.sha">
-
-                      <div class="list-content-tile list-content-tile--two-lines">
-                            <strong>Last Commit</strong>
-                            <a href="https://github.com/{{project_data.git_account}}/{{project_data.git_appname}}/commit/{{project_data.sha}}" target="_new" ng-bind="project_data.sha"></a>
-                      </div>
-                </li>
-
-                <li class="list-row list-row--has-primary list-row--has-separator" ng-show="project_data.last_build">
-
-                      <div class="list-content-tile list-content-tile--two-lines">
-                            <strong>Last Updated</strong>
-                            <span ng-bind="project_data.last_build | date : 'M/d hh:mm a'"></span>
-                      </div>
-                </li>
+            <li class="list-row list-row--has-primary list-row--has-separator">
+              <div class="list-content-tile list-content-tile--two-lines">
+                <strong>Git Hub Project Name</strong>
+                <span ng-bind="project_data.git_appname"></span>
+              </div>
+            </li>
+            <li class="list-row list-row--has-primary" ng-init="edit_branch=false" ng-class="{false:'list-row--has-separator'}[edit_branch]">
+              <lx-text-field class="list-content-tile" ng-show="edit_branch" label="Listening Branch">
+                <input id="editBranch" type="text" ng-model="project_data.branch">
+              </lx-text-field>
+              <div ng-show="!edit_branch" class="list-content-tile list-content-tile--two-lines">
+                <strong>Listening Branch</strong>
+                <span ng-bind="project_data.branch"></span>
+              </div>
+              <div class="list-secondary-tile" style="cursor:pointer;">
+                <i class="icon icon--s icon--grey icon--flat mdi mdi--edit" ng-show="!edit_branch" ng-click="edit_branch = true" focus="#editBranch"></i>
+                <i class="icon icon--s icon--grey icon--flat mdi mdi--save" ng-show="edit_branch" ng-click="edit_branch=false;updateNow();"></i>
+              </div>
+            </li>
+            <li class="list-row list-row--has-primary list-row--has-separator">
+              <div class="list-content-tile list-content-tile--two-lines">
+                <strong>Heroku App</strong>
+                <span ng-bind="project_data.heroku_appname"></span>
+              </div>
+            </li>
+            <li class="list-row list-row--has-primary list-row--has-separator" ng-show="project_data.sha">
+              <div class="list-content-tile list-content-tile--two-lines">
+                <strong>Last Commit</strong>
+                <a href="https://github.com/{{project_data.git_account}}/{{project_data.git_appname}}/commit/{{project_data.sha}}" target="_new" ng-bind="project_data.sha"></a>
+              </div>
+            </li>
+            <li class="list-row list-row--has-primary list-row--has-separator" ng-show="project_data.last_build">
+              <div class="list-content-tile list-content-tile--two-lines">
+                <strong>Last Updated</strong>
+                <span ng-bind="project_data.last_build | date : 'M/d hh:mm a'"></span>
+              </div>
+            </li>
           </ul>
         </div>
         <div class="grid__col6">
           <ul class="list">
-            <li class="list-row list-row--has-primary list-row--has-separator">
+            <li class="list-row list-row--has-primary">
               <div class="list-content-tile list-content-tile--two-lines">
                 <strong>Report Build Statuses To</strong>
                 <span>
@@ -204,9 +202,24 @@
                       <div class="list-content-tile list-content-tile--one-line">
                         <strong ng-bind="email"></strong>
                       </div>
+                      <div class="list-secondary-tile">
+                        <i class="icon icon--s icon--grey icon--flat mdi mdi--clear" style="cursor:pointer" ng-click="removeEmail($index)"></i>
+                      </div>
                     </li>
                   </ul>
                 </span>
+              </div>
+            </li>
+            <li class="list-row list-row--has-primary" ng-init="new_email=''">
+              <div class="grid">
+                <div ng-class="{true:'grid__col12', false:'grid__col9'}[(new_email|isEmpty)]">
+                  <lx-text-field class="list-content-tile" label="Add Email">
+                    <input type="text" ng-model="new_email">
+                  </lx-text-field>
+                </div>
+                <div class="grid__col3 mt">
+                  <i class="icon icon--s icon--grey icon--flat mdi mdi--save toolbar__right" ng-show="!(new_email|isEmpty)" style="cursor:pointer" ng-click="addEmail()"></i>
+                </div>
               </div>
             </li>
           </ul>
