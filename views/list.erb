@@ -31,17 +31,25 @@
     <h2 class="makeRight" style="margin-top: 40px;font-size: 1em;">Auto Deploy to Heroku, from Github Source</h2>
   </div>
 
-  <div class="container"><!--container part-->
-    <h1>Configured Projects</h1>
+  <div><!--container part-->
+    <div class="toolbar">
+
+        <strong class="toolbar__label tc-black"><h1>Configured Projects</h1></strong>
+
+        <div class="toolbar__right">
+            <button class="btn btn--m btn--red btn--fab" ng-click="openForm('newForm')" lx-ripple><i class="mdi mdi--add"></i></button>
+            <!-- <button class="btn btn--m btn--red btn--fab" ng-click="addnew=true" lx-ripple><i class="mdi mdi--add"></i></button> -->
+        </div>
+    </div>
     <div class="data-table-container">
       <table class="data-table data-table--has-primary data-table--has-secondary">
         <thead>
           <tr>
-          <th>Project</th>
-          <th>Branch</th>
-          <th>Email Ids</th>
-          <th>Heroku App</th>
-          <th>Action</th>
+          <th><strong>Project</strong></th>
+          <th><strong>Git Branch</strong></th>
+          <th><strong>Email Ids</strong></th>
+          <th><strong>Heroku App</strong></th>
+          <th><strong>Action</strong></th>
           </tr>
         </thead>
       <tbody>
@@ -107,8 +115,8 @@
 
               <lx-dropdown-menu>
                 <ul>
-                  <li><a class="dropdown-link" ng-click="delete()">Delete</a></li>
                   <li><a class="dropdown-link" ng-click="opendDialog('projectDetail', data)">View Details</a></li>
+                  <li><a class="dropdown-link btn btn--m btn--red btn--flat" ng-click="delete()">Delete</a></li>
                 </ul>
               </lx-dropdown-menu>
             </lx-dropdown>
@@ -206,6 +214,98 @@
       </div>
     </div>
   </div>
+  <div class="dialog dialog--l" id="newForm" lx-dialog>
+    <div class="dialog__header bgc-light-blue-500">
+        <div class="toolbar">
+            <div class="toolbar__left mr-">
+                <button class="btn btn--l btn--white btn--icon" lx-ripple>
+                    <i class="mdi mdi--menu"></i>
+                </button>
+            </div>
+
+            <strong class="toolbar__label tc-white">New Project</strong>
+
+            <div class="toolbar__right">
+                <button class="btn btn--l btn--white btn--icon" style="-ms-transform: rotate(45deg);-webkit-transform: rotate(45deg);transform: rotate(45deg);" lx-ripple lx-dialog-close>
+                    <i class="mdi mdi--add"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dialog__content p">
+      <div class="grid">
+        <div class="grid__col6">
+          <div class="switch">
+            <input type="checkbox" id="switch1" class="switch__input" ng-model="new_form.sub_projects">
+            <label for="switch1" class="switch__label">Sub-project</label>
+            <span class="switch__help">Does this project have any sub-project?</span>
+          </div>
+        </div>
+        <div class="grid__col6">
+          <button ng-click="addSub()" ng-show="new_form.sub_projects && new_form.total.length < 3" class="btn btn--m bgc-light-blue-200 btn--fab toolbar__right" lx-ripple><i class="mdi mdi--add"></i></button>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="grid__col6">
+          <lx-text-field label="Github Account">
+            <input type="text" ng-model="new_form.git_account">
+          </lx-text-field>
+        </div>
+        <div class="grid__col6">
+          <lx-text-field label="Github Project">
+            <input type="text" ng-model="new_form.git_appname">
+          </lx-text-field>
+        </div>
+      </div>
+      <div ng-show="!new_form.sub_projects">
+        <div class="grid">
+          <div class="grid__col4">
+            <lx-text-field label="Heroku App">
+              <input type="text" ng-model="new_form.heroku">
+            </lx-text-field>
+          </div>
+          <div class="grid__col4">
+            <lx-text-field label="Listening Branch">
+              <input type="text" ng-model="new_form.branch">
+            </lx-text-field>
+          </div>
+          <div class="grid__col4">
+            <lx-text-field label="Comma Separated Email Ids">
+              <input type="text" ng-model="new_form.email">
+            </lx-text-field>
+          </div>
+        </div>
+      </div>
+      <div ng-show="new_form.sub_projects">
+        <div class="grid" ng-repeat = "project in new_form.total">
+          <div class="grid__col3">
+            <lx-text-field label="Folder Name">
+              <input type="text" ng-model="project.folder_name">
+            </lx-text-field>
+          </div>
+          <div class="grid__col3">
+            <lx-text-field label="Heroku App">
+              <input type="text" ng-model="project.heroku_appname">
+            </lx-text-field>
+          </div>
+          <div class="grid__col3">
+            <lx-text-field label="Listening Branch">
+              <input type="text" ng-model="project.branch">
+            </lx-text-field>
+          </div>
+          <div class="grid__col3">
+            <lx-text-field label="Comma Separated Email Ids">
+              <input type="text" ng-model="project.email">
+            </lx-text-field>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dialog__actions">
+      <button class="btn btn--m btn--black btn--flat" ng-click="saveForm()" lx-ripple>Save</button>
+    </div>
+  </div>
   <div class="black_overlay" ng-show="addnew">
    <div class="overlay_content" style="width:{{getWidth()}}px; max-height:{{getHeight()}}px; height:{{getHeight()}}px; color:#000; background:#d3d3d3; padding:15px 15px 5px;">
     <h2 class="m10"> Does this project has sub-projects?
@@ -215,41 +315,8 @@
       </span>
     </h2>
     <form action="/" method="POST">
-     <table ng-show="new_form.sub_projects == 'false'" class="signuptable" style="border:0; cellpadding: 0; cellspacing:0; width:100%;">
+    <table ng-show="new_form.sub_projects" class="signuptable" style="border:0; cellpadding: 0; cellspacing:0; width:100%">
       <tbody>
-       <tr>
-          <td>Github Account Name</td>
-          <td><input type="text" ng-model="new_form.git_account" name="github_acc" placeholder="LiftOffLLC"/> </td>
-        </tr>
-       <tr>
-          <td>Github Project Name</td>
-          <td><input type="text" ng-model="new_form.git_appname" name="github" placeholder="AngularJS"/> </td>
-        </tr>
-        <tr>
-          <td>Heroku App Name</td>
-          <td><input type="text" ng-model="new_form.heroku" placeholder="jump-start"/></td>
-        </tr>
-        <tr>
-          <td>Email</td>
-          <td><input type="text" ng-model="new_form.email" placeholder="Separate by commas for multiple emails"/></td>
-        </tr>
-      </tbody>
-    </table>
-    <table ng-show="new_form.sub_projects == 'true'" class="signuptable" style="border:0; cellpadding: 0; cellspacing:0; width:100%">
-      <tbody>
-        <tr>
-          <td>Github Account Name</td>
-          <td colspan="2">
-            <input type="text" ng-model="new_form.git_account" name="github_acc" placeholder="LiftOffLLC"/>
-
-          </td>
-        </tr>
-        <tr>
-          <td>Github Project Name</td>
-          <td colspan="2">
-            <input type="text" ng-model="new_form.git_appname" name="github" placeholder="Fanoramic"/>
-          </td>
-        </tr>
         <tr ng-repeat="project in new_form.total">
          <td><input type="text" ng-model="project.folder_name" name="folder_name1" placeholder="Sub-folder in the project"/></td>
          <td><input type="text" ng-model="project.heroku_appname" placeholder="Heroku App Name"/></td>
@@ -268,7 +335,6 @@
     <a href="javascript:void(0)" class="overlay_close" ng-click="addnew = false"></a>
     </div>
   </div>
-  <div class="nePara"><button ng-click="addnew=true" class="addNewBtn1">Add New</button></div>
 </div>
 
 <div class="footer"><!--footer part-->

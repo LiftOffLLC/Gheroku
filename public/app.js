@@ -16,12 +16,16 @@ hookapp.factory('repo', ['$resource', function ($resource, $scope) {
 }]);
 
 hookapp.controller('mainctrl', function($scope, repo, dateFilter, LxDialogService){
-	$scope.new_form = {sub_projects: 'false', git_account: 'LiftOffLLC', email: ''};
+	$scope.new_form = {sub_projects: false, git_account: 'LiftOffLLC', email: ''};
 	$scope.new_form.total = [{email: '', sha:'', last_build: '', id: 1}, {email: '', sha:'', last_build: '', id: 2}];
 	$scope.addnew = false;
 
   $scope.opendDialog = function(dialogId, project_data){
     $scope.project_data = project_data;
+    LxDialogService.open(dialogId);
+  };
+
+  $scope.openForm = function(dialogId){
     LxDialogService.open(dialogId);
   };
 
@@ -34,11 +38,11 @@ hookapp.controller('mainctrl', function($scope, repo, dateFilter, LxDialogServic
 				if(proj.subproj_configs) {
 					_.each(proj.subproj_configs, function(subproj){
 						subproj.git_appname = proj.git_appname;
-            if(angular.isDefined(subproj.report_to)) subproj.email = subproj.report_to.join(",")
+            if(!$scope.isEmpty(subproj.report_to)) subproj.email = subproj.report_to.join(",")
 						$scope.display_data.push(subproj);
 					})
 				} else {
-          if(angular.isDefined(proj.report_to)) proj.email = proj.report_to.join(",")
+          if(!$scope.isEmpty(proj.report_to)) proj.email = proj.report_to.join(",")
 					$scope.display_data.push(proj);
 				}
 			})
@@ -50,13 +54,17 @@ hookapp.controller('mainctrl', function($scope, repo, dateFilter, LxDialogServic
     })
   }
   $scope.getHeight = function(){
-    return $scope.new_form.sub_projects == 'true'? 360+(($scope.new_form.total.length-2)*10) : 280;
+    return $scope.new_form.sub_projects? 360+(($scope.new_form.total.length-2)*10) : 280;
   }
   $scope.getWidth = function(){
-    return $scope.new_form.sub_projects == 'true'? 805 : 590;
+    return $scope.new_form.sub_projects? 805 : 590;
   }
   $scope.addSub = function(){
     $scope.new_form.total.push({sha:'', last_build: '', id: $scope.new_form.total.length, email: ''});
+  }
+
+  $scope.isEmpty = function(element){
+    return (typeof element === "undefined" || element === null || $.trim(element) === '');
   }
 
   $scope.validateEmail = function(proj){
@@ -80,7 +88,7 @@ hookapp.controller('mainctrl', function($scope, repo, dateFilter, LxDialogServic
   }
 
 	$scope.saveForm = function(){
-    if($scope.new_form.sub_projects == "true"){
+    if($scope.new_form.sub_projects){
       for(var pro_ind in $scope.new_form.total){
         var is_valid = $scope.validateEmail($scope.new_form.total[pro_ind]);
         if(!is_valid) return false;

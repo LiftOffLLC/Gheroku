@@ -97,12 +97,12 @@ post '/new_form' do
   in_mem = $cache.get('configured_projects')
   input_data = input_hash["formdata"]
 
-  if input_data["sub_projects"] == "true"
+  if input_data["sub_projects"]
     logger.info "sub projects exist"
     in_mem.push({:git_account => input_data["git_account"], :sub_projects => true, :subproj_configs => input_data["total"], :git_appname => input_data["git_appname"]})
   else
     logger.info "single app, no sub-projects exist"
-    in_mem.push({:git_account => input_data["git_account"],:git_appname =>input_data["git_appname"], :heroku_appname => input_data["heroku"], :last_build => nil, :sha => nil, :branch => "launch", :report_to => input_data["report_to"]})
+    in_mem.push({:git_account => input_data["git_account"],:git_appname =>input_data["git_appname"], :heroku_appname => input_data["heroku"], :last_build => nil, :sha => nil, :branch => input_data["branch"], :report_to => input_data["report_to"]})
   end
   $cache.set("configured_projects", in_mem)
 end
