@@ -137,7 +137,8 @@ post '/payload' do
 
         logger.info "Heroku repo found, building starts!!"
 
-        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>project[0]["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>to_deploy["heroku_appname"], :folder_name=>project[0]["folder_name"], :report_to=>project[0]["report_to"]})
+        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>project[0]["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>project[0]["heroku_appname"], :folder_name=>project[0]["folder_name"], :report_to=>project[0]["report_to"]})
+        logger.info
         # launch_hook
       else
         logger.info "Code pushed to non launch, no need to deploy"
