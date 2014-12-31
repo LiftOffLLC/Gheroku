@@ -7,15 +7,15 @@
   <link rel="stylesheet" type="text/css" href="../lumx.css" />
   <link rel="stylesheet" type="text/css" href="../default.css" />
 
-  <script src="jquery.js"></script>
+  <script src="jquery.min.js"></script>
   <script src="jquery.transit.js"></script>
-  <script src="velocity.js"></script>
+  <script src="velocity.min.js"></script>
   <script src="highlight.pack.js"></script>
-  <script src="moment-with-locales.js"></script>
-  <script src="Underscore.js" ></script>
-  <script src="angular.js"></script>
-  <script src="angular-resource.js"></script>
-  <script src="angular-route.js" ></script>
+  <script src="moment-with-locales.min.js"></script>
+  <script src="Underscore.min.js" ></script>
+  <script src="angular.min.js"></script>
+  <script src="angular-resource.min.js"></script>
+  <script src="angular-route.min.js" ></script>
   <script src="angular-highlightjs.js"></script>
 
   <script src="lumx.js"></script>
@@ -56,24 +56,7 @@
         <tr ng-repeat="data in display_data" class="data-table">
           <td>{{data.git_appname}}</td>
           <td>
-            <div ng-controller="renameCtrl">
-              <div ng-init="updatedName = true">
-                <div ng-show="updatedName">
-                  {{data.branch}}
-                </div>
-              </div>
-              <!-- <div ng-init="show = 'named'">
-                <div ng-show="show == 'named'">
-                 <button ng-click="show = 'rename'; updatedName=false" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana">Edit</button>
-                </div>
-                <div ng-show="show == 'rename'">
-                  <form name="renameForm">
-                    <input ng-model="branch_name" style="width: 65px;" ng-required="true">
-                    <input type="submit" ng-click="show = 'named'; updateNow(); updatedName=true" ng-disabled="renameForm.$invalid" value="Save" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana"/>
-                  </form>
-                </div>
-              </div> -->
-            </div>
+            {{data.branch}}
           </td>
           <td>
             <lx-dropdown position="left" from-top ng-show="data.report_to && data.report_to.length > 1">
@@ -87,23 +70,8 @@
                 </ul>
               </lx-dropdown-menu>
             </lx-dropdown>
-            <div ng-controller="renameCtrl" ng-show="data.report_to && data.report_to.length == 1">
-              <div ng-init="updatedName = true">
-                <div ng-show="updatedName">
-                  {{data.report_to[0]}}
-                </div>
-              </div>
-              <!-- <div ng-init="show = 'named'">
-                <div ng-show="show == 'named'">
-                 <button ng-click="show = 'rename'; updatedName=false" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana">Edit</button>
-                </div>
-                <div ng-show="show == 'rename'">
-                  <form name="renameForm">
-                    <input ng-model="email" style="width: 65px;" ng-required="true">
-                    <input type="submit" ng-click="show = 'named'; updateNow(); updatedName=true" ng-disabled="renameForm.$invalid" value="Save" style="text-align: center; padding:1px 3px; font-size:13px; background-color:#b7211b; border:0px; color:white; font-family:verdana"/>
-                  </form>
-                </div>
-              </div> -->
+            <div ng-show="data.report_to && data.report_to.length == 1">
+              {{data.report_to[0]}}
             </div>
           </td>
           <td>{{data.heroku_appname}}</td>
@@ -316,36 +284,8 @@
       </div>
     </div>
     <div class="dialog__actions">
-      <button class="btn btn--m btn--black btn--flat" ng-click="saveForm()" lx-ripple>Save</button>
-    </div>
-  </div>
-  <div class="black_overlay" ng-show="addnew">
-   <div class="overlay_content" style="width:{{getWidth()}}px; max-height:{{getHeight()}}px; height:{{getHeight()}}px; color:#000; background:#d3d3d3; padding:15px 15px 5px;">
-    <h2 class="m10"> Does this project has sub-projects?
-      <span style="font-size: 14px; margin-left: 20px">
-        <input type="radio" ng-model="new_form.sub_projects" value="true">Yes
-        <input type="radio" ng-model="new_form.sub_projects" value="false">No
-      </span>
-    </h2>
-    <form action="/" method="POST">
-    <table ng-show="new_form.sub_projects" class="signuptable" style="border:0; cellpadding: 0; cellspacing:0; width:100%">
-      <tbody>
-        <tr ng-repeat="project in new_form.total">
-         <td><input type="text" ng-model="project.folder_name" name="folder_name1" placeholder="Sub-folder in the project"/></td>
-         <td><input type="text" ng-model="project.heroku_appname" placeholder="Heroku App Name"/></td>
-         <td><input type="text" ng-model="project.branch" placeholder="Branch Name"/></td>
-         <td><input type="text" ng-model="project.email" placeholder="Email separated by comma"/></td>
-       </tr>
-       <tr>
-        <td colspan="3">
-          <a ng-click="addSub()" class="addNewBtn1" href="" ng-show="new_form.total.length < 3" style="margin-right: 23px; float: right; font-size: 10px">Add 1 More</a>
-        </td>
-       </tr>
-      </tbody>
-    </table>
-    <input type="button" ng-click="saveForm()" value="Save" class="saveBtn"/>
-    </form>
-    <a href="javascript:void(0)" class="overlay_close" ng-click="addnew = false"></a>
+      <button class="btn btn--m btn--light-green btn--raised" ng-click="saveForm()" lx-ripple>Save</button>
+      <!-- <button class="btn btn--m btn--black btn--flat" ng-click="saveForm()" lx-ripple>Save</button> -->
     </div>
   </div>
 </div>

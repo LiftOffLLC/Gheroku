@@ -150,25 +150,3 @@ hookapp.filter("isEmpty", function(){
     return (typeof element === "undefined" || element === null || $.trim(element) === '')
   };
 });
-
-hookapp.controller('renameCtrl',function($scope, repo){
-  // getting the existing branch name
-  $scope.branch_name = $scope.data.branch;
-  $scope.email = $scope.data.email;
-  // renaming the branch
-  $scope.updateNow = function(){
-    console.log(this.data);
-    var upd_config = this.data;
-    upd_config.branch = $scope.branch_name;
-    upd_config.email = $scope.email;
-    var is_valid = $scope.validateEmail(upd_config);
-    if(!is_valid) return false;
-
-    repo.renameConfig(upd_config, function(flg){
-      if (flg.success == true){
-        $scope.data.branch = $scope.branch_name;
-        $scope.data.email = $scope.email;
-      }
-    });
-  }
-});

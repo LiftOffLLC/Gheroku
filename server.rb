@@ -54,8 +54,8 @@ end
 
 delete '/exiting_config' do
   content_type :json
-  in_mem = $cache.get('configured_projects')
-  in_mem = in_mem.reject {|p| p[:git_appname].to_s == params["git_appname"].to_s}
+  in_mem = JSON.parse($cache.get('configured_projects').to_json)
+  in_mem = in_mem.reject {|p| p["git_appname"].to_s == params["git_appname"].to_s}
   $cache.set("configured_projects", in_mem)
   {:success => true}.to_json
 end
@@ -65,7 +65,7 @@ put '/update_branch' do
   input_hash = JSON.parse(request.body.read)
 
   logger.info "Updating the branch name"
-  in_mem = $cache.get('configured_projects')
+  in_mem = JSON.parse($cache.get('configured_projects').to_json)
 
   in_mem.each{|app|
     if app["git_appname"] == input_hash["git_appname"]
