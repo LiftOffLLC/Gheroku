@@ -41,6 +41,7 @@ $deploy_bucket = []
 $active_deploy = false
 
 $heroku = Heroku::API.new(:api_key => '3cb3ad41-bf0e-489e-962e-ad6101fe48a4')
+# $heroku = Heroku::API.new(:api_key => '1539e3af-5e38-4bfb-957d-37b8f4699ad9')
 # @git_appname = nil
 # @heroku_appname = nil
 # @folder_name = nil
@@ -215,6 +216,8 @@ def check_build(build)
     last_rel = releases.body.last
     release_time = Time.parse(last_rel["created_at"]).to_i
     update_time = (build["last_build"]/1000) + Time.zone_offset("IST").to_i
+    puts "Update Time: #{update_time}"
+    puts "Release Time: #{release_time}"
   rescue Exception => e
     message = message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p> Last Commit Id: #{last_rel['commit']}</p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
   end
