@@ -5,6 +5,7 @@ require 'rack/session/dalli'
 require 'mandrill'
 require 'rest_client'
 require 'time'
+require 'heroku-api'
 
 $mandrill = Mandrill::API.new 'we_4e96NxNZ77X8JP2ydGg'
 
@@ -38,6 +39,8 @@ $deploy_bucket = []
 # @launch_branch_name = 'launch'
 # @pending_deploy = false
 $active_deploy = false
+
+$heroku = Heroku::API.new(:api_key => '3cb3ad41-bf0e-489e-962e-ad6101fe48a4')
 # @git_appname = nil
 # @heroku_appname = nil
 # @folder_name = nil
@@ -137,7 +140,7 @@ post '/payload' do
 
         logger.info "Heroku repo found, building starts!!"
 
-        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>project[0]["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>project[0]["heroku_appname"], :folder_name=>project[0]["folder_name"], :report_to=>project[0]["report_to"]})
+        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>project[0]["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>project[0]["heroku_appname"], :folder_name=>project[0]["folder_name"], :report_to=>project[0]["report_to"], :last_build=>project[0][:last_build]})
         logger.info
         # launch_hook
       else
@@ -151,7 +154,7 @@ post '/payload' do
         ist_time = utc - Time.zone_offset("IST").to_i
         to_deploy[:last_build] = ist_time*1000
         to_deploy[:sha] = payload_data["after"]
-        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>to_deploy["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>to_deploy["heroku_appname"], :folder_name=>nil, :report_to=>to_deploy["report_to"]})
+        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>to_deploy["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>to_deploy["heroku_appname"], :folder_name=>nil, :report_to=>to_deploy["report_to"], :last_build=>to_deploy[:last_build]})
 
         $cache.set("configured_projects", in_mem)
         logger.info "Heroku repo found, building starts!!"
@@ -195,25 +198,38 @@ def deploy
 end
 
 def check_build(build)
-  build = JSON.parse(build.to_json)
-  url = "https://api.heroku.com/apps/#{build['heroku_appname']}/builds"
-  response = JSON.parse(RestClient.get url, "Accept"=>"application/vnd.heroku+json;version=3").last
-  time_now = Time.now().to_i
-  created_at = Time.parse(response['created_at']).to_i
+
   return false if(build["report_to"].nil? || build["report_to"].empty?)
+  
+  build = JSON.parse(build.to_json)
+
+  message = nil
+
   puts "Sending email reports to #{build['report_to']}"
   email_arr = []
   build["report_to"].each { |email|  
     email_arr.push({"email"=>email})
   }
-  if(response["status"] == "succeeded")
-    if created_at+(15*60) > time_now
+
+  begin
+    releases = $heroku.get_releases(build['heroku_appname'])
+    last_rel = releases.body.last
+    release_time = Time.parse(last_rel["created_at"]).to_i
+    update_time = (build["last_build"]/1000) + Time.zone_offset("IST").to_i
+  rescue Exception => e
+    message = message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p> Last Build Id: #{response['id']}</p><p>Last Deployed At: #{response['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+  end
+    
+  # url = "https://api.heroku.com/apps/#{build['heroku_appname']}/builds"
+  # response = JSON.parse(RestClient.get url, "Accept"=>"application/vnd.heroku+json;version=3").last
+  # time_now = Time.now().to_i
+  # created_at = Time.parse(response['created_at']).to_i
+  if(message.nil?)
+    if release_time > update_time
       message = {"html"=>"<p>Build Status: Successfull</p><p> Build Id: #{response['id']}</p><p>Deployed At: #{response['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     else
-      message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p> Last Build Id: #{response['id']}</p><p>Last Deployed At: #{response['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+      message = {"html"=>"<p>Build Status: Failed</p><p> Build Id: #{response['id']}</p><p>Attempted At: #{response['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     end
-  else
-    message = {"html"=>"<p>Build Status: Failed</p><p> Build Id: #{response['id']}</p><p>Attempted At: #{response['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
   end
   result = $mandrill.messages.send message
 end

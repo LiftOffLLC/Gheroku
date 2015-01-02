@@ -5,3 +5,5 @@ gem 'sinatra',     '~> 1.3.5'
 gem 'rufus-scheduler'
 gem 'dalli'
 gem 'mandrill-api'
+
+gem 'heroku-api'
