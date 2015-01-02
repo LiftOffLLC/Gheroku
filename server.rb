@@ -215,11 +215,11 @@ def check_build(build)
     releases = $heroku.get_releases(build['heroku_appname'])
     last_rel = releases.body.last
     release_time = Time.parse(last_rel["created_at"]).to_i
-    update_time = (build["last_build"]/1000) + Time.zone_offset("IST").to_i
+    update_time = (build["last_build"]/1000) + Time.zone_offset("IST").to_i - (10*60)
     puts "Update Time: #{update_time}"
     puts "Release Time: #{release_time}"
   rescue Exception => e
-    message = message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p> Last Commit Id: #{last_rel['commit']}</p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+    message = message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p>App Name: #{build['heroku_appname']}</p><p> Last Commit Id: #{last_rel['commit']}</p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
   end
     
   # url = "https://api.heroku.com/apps/#{build['heroku_appname']}/builds"
@@ -228,9 +228,9 @@ def check_build(build)
   # created_at = Time.parse(response['created_at']).to_i
   if(message.nil?)
     if release_time > update_time
-      message = {"html"=>"<p>Build Status: Successfull</p><p> Commit Id: #{last_rel['commit']}</p><p>Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+      message = {"html"=>"<p>Build Status: Successfull</p><p>App Name: #{build['heroku_appname']}</p><p> Commit Id: #{last_rel['commit']}</p><p>Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     else
-      message = {"html"=>"<p>Build Status: Failed</p><p> Last Commit Id: #{last_rel['commit']}</p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+      message = {"html"=>"<p>Build Status: Failed</p><p>App Name: #{build['heroku_appname']}</p><p> Last Commit Id: #{last_rel['commit']}</p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     end
   end
   result = $mandrill.messages.send message
