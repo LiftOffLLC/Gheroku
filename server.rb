@@ -134,8 +134,7 @@ post '/payload' do
 
       if project.length > 0
         utc = Time.new.to_i
-        ist_time = utc - Time.zone_offset("IST").to_i
-        project[0][:last_build] = ist_time*1000
+        project[0][:last_build] = utc*1000
         project[0][:sha] = payload_data["after"]
         $cache.set("configured_projects", in_mem)
 
@@ -151,8 +150,7 @@ post '/payload' do
       logger.info "single app, no subprojects"
       if branch_committedto == to_deploy["branch"]
         utc = Time.new.to_i
-        ist_time = utc - Time.zone_offset("IST").to_i
-        to_deploy[:last_build] = ist_time*1000
+        to_deploy[:last_build] = utc*1000
         to_deploy[:sha] = payload_data["after"]
         $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>to_deploy["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>to_deploy["heroku_appname"], :folder_name=>nil, :report_to=>to_deploy["report_to"], :last_build=>to_deploy[:last_build]})
 
@@ -215,7 +213,7 @@ def check_build(build)
     releases = $heroku.get_releases(build['heroku_appname'])
     last_rel = releases.body.last
     release_time = Time.parse(last_rel["created_at"]).to_i
-    update_time = (build["last_build"]/1000) + Time.zone_offset("IST").to_i - (10*60)
+    update_time = build["last_build"]/1000
     puts "Update Time: #{update_time}"
     puts "Release Time: #{release_time}"
   rescue Exception => e
