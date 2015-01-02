@@ -141,7 +141,6 @@ post '/payload' do
         logger.info "Heroku repo found, building starts!!"
 
         $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>project[0]["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>project[0]["heroku_appname"], :folder_name=>project[0]["folder_name"], :report_to=>project[0]["report_to"], :last_build=>project[0][:last_build]})
-        logger.info
         # launch_hook
       else
         logger.info "Code pushed to non launch, no need to deploy"
@@ -217,7 +216,7 @@ def check_build(build)
     release_time = Time.parse(last_rel["created_at"]).to_i
     update_time = (build["last_build"]/1000) + Time.zone_offset("IST").to_i
   rescue Exception => e
-    message = message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p> Last Build Id: #{response['id']}</p><p>Last Deployed At: #{response['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+    message = message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p> Last Commit Id: #{last_rel['commit']}</p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
   end
     
   # url = "https://api.heroku.com/apps/#{build['heroku_appname']}/builds"
@@ -226,9 +225,9 @@ def check_build(build)
   # created_at = Time.parse(response['created_at']).to_i
   if(message.nil?)
     if release_time > update_time
-      message = {"html"=>"<p>Build Status: Successfull</p><p> Build Id: #{response['id']}</p><p>Deployed At: #{response['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+      message = {"html"=>"<p>Build Status: Successfull</p><p> Commit Id: #{last_rel['commit']}</p><p>Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     else
-      message = {"html"=>"<p>Build Status: Failed</p><p> Build Id: #{response['id']}</p><p>Attempted At: #{response['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+      message = {"html"=>"<p>Build Status: Failed</p><p> Last Commit Id: #{last_rel['commit']}</p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     end
   end
   result = $mandrill.messages.send message
