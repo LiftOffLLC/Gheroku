@@ -40,8 +40,8 @@ $deploy_bucket = []
 # @pending_deploy = false
 $active_deploy = false
 
-# $heroku = Heroku::API.new(:api_key => '3cb3ad41-bf0e-489e-962e-ad6101fe48a4')
-$heroku = Heroku::API.new(:api_key => '1539e3af-5e38-4bfb-957d-37b8f4699ad9')
+$heroku = Heroku::API.new(:api_key => '3cb3ad41-bf0e-489e-962e-ad6101fe48a4')
+# $heroku = Heroku::API.new(:api_key => '1539e3af-5e38-4bfb-957d-37b8f4699ad9')
 # @git_appname = nil
 # @heroku_appname = nil
 # @folder_name = nil
