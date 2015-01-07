@@ -40,8 +40,8 @@ $deploy_bucket = []
 # @pending_deploy = false
 $active_deploy = false
 
-$heroku = Heroku::API.new(:api_key => '3cb3ad41-bf0e-489e-962e-ad6101fe48a4')
-# $heroku = Heroku::API.new(:api_key => '1539e3af-5e38-4bfb-957d-37b8f4699ad9')
+# $heroku = Heroku::API.new(:api_key => '3cb3ad41-bf0e-489e-962e-ad6101fe48a4')
+$heroku = Heroku::API.new(:api_key => '1539e3af-5e38-4bfb-957d-37b8f4699ad9')
 # @git_appname = nil
 # @heroku_appname = nil
 # @folder_name = nil
@@ -135,12 +135,13 @@ post '/payload' do
       if project.length > 0
         utc = Time.new.to_i
         project[0][:last_build] = utc*1000
-        project[0][:sha] = payload_data["after"]
+        project[0][:sha] = payload_data["head_commit"]["id"]
+        project[0][:last_commit] = payload_data["head_commit"]["message"]
         $cache.set("configured_projects", in_mem)
 
-        logger.info "Heroku repo found, building starts!!"
+        logger.info "Heroku repo found, building starts!! #{utc}"
 
-        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>project[0]["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>project[0]["heroku_appname"], :folder_name=>project[0]["folder_name"], :report_to=>project[0]["report_to"], :last_build=>project[0][:last_build]})
+        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>project[0]["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>project[0]["heroku_appname"], :folder_name=>project[0]["folder_name"], :report_to=>project[0]["report_to"], :last_build=>project[0][:last_build], :last_commit=>project[0][:last_commit], :sha=>project[0][:sha]})
         logger.info "================================== #{$deploy_bucket[0]}"
         # launch_hook
       else
@@ -152,8 +153,9 @@ post '/payload' do
       if branch_committedto == to_deploy["branch"]
         utc = Time.new.to_i
         to_deploy[:last_build] = utc*1000
-        to_deploy[:sha] = payload_data["after"]
-        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>to_deploy["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>to_deploy["heroku_appname"], :folder_name=>nil, :report_to=>to_deploy["report_to"], :last_build=>to_deploy[:last_build]})
+        to_deploy[:sha] = payload_data["head_commit"]["id"]
+        to_deploy[:last_commit] = payload_data["head_commit"]["message"]
+        $deploy_bucket.unshift({:git_account=>to_deploy["git_account"], :launch_branch_name=>to_deploy["branch"], :git_appname=>to_deploy["git_appname"], :heroku_appname=>to_deploy["heroku_appname"], :folder_name=>nil, :report_to=>to_deploy["report_to"], :last_build=>to_deploy[:last_build], :last_commit=>to_deploy[:last_commit], :sha=>to_deploy[:sha]})
         logger.info "================================== #{$deploy_bucket[0]}"
         $cache.set("configured_projects", in_mem)
         logger.info "Heroku repo found, building starts!!"
@@ -184,6 +186,7 @@ end
 
 # put in the logic to wait for few seconds & then run
 def deploy
+
   $active_deploy = true
   bucket = JSON.parse($deploy_bucket.last.to_json)
   unless bucket.nil?
@@ -218,7 +221,7 @@ def check_build(build)
     puts "Update Time: #{update_time}"
     puts "Release Time: #{release_time}"
   rescue Exception => e
-    message = message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p>App Name: #{build['heroku_appname']}</p><p> Last Commit Id: #{last_rel['commit']}</p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+    message = message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p>App Name: #{build['heroku_appname']}</p><p> Attempted Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
   end
     
   # url = "https://api.heroku.com/apps/#{build['heroku_appname']}/builds"
@@ -227,9 +230,9 @@ def check_build(build)
   # created_at = Time.parse(response['created_at']).to_i
   if(message.nil?)
     if release_time > update_time
-      message = {"html"=>"<p>Build Status: Successfull</p><p>App Name: #{build['heroku_appname']}</p><p> Commit Id: #{last_rel['commit']}</p><p>Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+      message = {"html"=>"<p>Build Status: Successfull</p><p>App Name: #{build['heroku_appname']}</p><p> Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     else
-      message = {"html"=>"<p>Build Status: Failed</p><p>App Name: #{build['heroku_appname']}</p><p> Last Commit Id: #{last_rel['commit']}</p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+      message = {"html"=>"<p>Build Status: Failed</p><p>App Name: #{build['heroku_appname']}</p><p> Attempted Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     end
   end
   result = $mandrill.messages.send message

@@ -144,7 +144,7 @@
             <li class="list-row list-row--has-primary list-row--has-separator" ng-show="project_data.sha">
               <div class="list-content-tile list-content-tile--two-lines">
                 <strong>Last Commit</strong>
-                <a href="https://github.com/{{project_data.git_account}}/{{project_data.git_appname}}/commit/{{project_data.sha}}" target="_new" ng-bind="project_data.sha"></a>
+                <a href="https://github.com/{{project_data.git_account}}/{{project_data.git_appname}}/commit/{{project_data.sha}}" target="_new" ng-bind="project_data.last_commit"></a>
               </div>
             </li>
             <li class="list-row list-row--has-primary list-row--has-separator" ng-show="project_data.last_build">
@@ -198,11 +198,6 @@
   <div class="dialog dialog--l" id="newForm" lx-dialog>
     <div class="dialog__header bgc-light-blue-500">
         <div class="toolbar">
-            <div class="toolbar__left mr-">
-                <button class="btn btn--l btn--white btn--icon" lx-ripple>
-                    <i class="mdi mdi--menu"></i>
-                </button>
-            </div>
 
             <strong class="toolbar__label tc-white">New Project</strong>
 
@@ -252,7 +247,7 @@
             </lx-text-field>
           </div>
           <div class="grid__col4">
-            <lx-text-field label="Comma Separated Email Ids">
+            <lx-text-field label="Email Ids (, separated)">
               <input type="text" ng-model="new_form.email">
             </lx-text-field>
           </div>
@@ -276,7 +271,7 @@
             </lx-text-field>
           </div>
           <div class="grid__col3">
-            <lx-text-field label="Comma Separated Email Ids">
+            <lx-text-field label="Email Ids (, separated)">
               <input type="text" ng-model="project.email">
             </lx-text-field>
           </div>
