@@ -20,12 +20,21 @@ Ruby based web application to auto-deploy code to Heroku whenever any code is pu
  * Install Heroku toolkit: wget -qO- https://toolbelt.heroku.com/install-ubuntu.sh | sh
  * heroku login(prompts for email and password, taken from the account)
  * Add this email as a collaborator on Heroku.
+ * Set heroku api key as environment variable 
+ 		> Add: export HEROKU_API_KEY="<your heroku api key>"
+ 		> Run: . .bashrc
 
-4. For single project apps where the rest-api and web layer reside on the same heroku application, any code pushed to "launch" branch would trigger a build on Heroku.
+4. Set up Mandrill for status report emails.
+ * Create an account on mandrill.com
+ * Set mandrill api key as environment variable
+ 		> Add: export MANDRILL_API_KEY="<your mandrill api key>"
+ 		> Run: . .bashrc
 
-5. For projects which contain sub-projects, the branch can be configured. In the folder name field, key in the folder name the way it is in the code. Also specify the corresponding branch name and the heroku app to which you want your code to be deployed.
+5. For single project apps where the rest-api and web layer reside on the same heroku application, any code pushed to "launch" branch would trigger a build on Heroku.
 
-6. Memcache is needed for the app to store data. Install memcache and add an entry to your etc/hosts file specifying the url it is running on. It generally is 127.0.0.1 if its running on the same machine as the app.
+6. For projects which contain sub-projects, the branch can be configured. In the folder name field, key in the folder name the way it is in the code. Also specify the corresponding branch name and the heroku app to which you want your code to be deployed.
+
+7. Memcache is needed for the app to store data. Install memcache and add an entry to your etc/hosts file specifying the url it is running on. It generally is 127.0.0.1 if its running on the same machine as the app.
 
 #Running the application#
 
