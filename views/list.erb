@@ -42,18 +42,18 @@
         </div>
     </div>
     <div class="data-table-container">
-      <table class="data-table data-table--has-primary data-table--has-secondary">
+      <table class="data-table data-table--has-primary data-table--has-secondary" style="background: white">
         <thead>
           <tr>
           <th><strong>Project</strong></th>
-          <th><strong>Git Branch</strong></th>
+          <th style="width: 200px"><strong>Git Branch</strong></th>
           <th><strong>Email Ids</strong></th>
           <th><strong>Heroku App</strong></th>
-          <th><strong>Action</strong></th>
+          <th style="width: 200px"><strong>Action</strong></th>
           </tr>
         </thead>
       <tbody>
-        <tr ng-repeat="data in display_data" class="data-table">
+        <tr ng-repeat="data in display_data" class="data-table" style="border-bottom: 1px solid #ececec">
           <td>{{data.git_appname}}</td>
           <td>
             {{data.branch}}
