@@ -228,9 +228,9 @@ def check_build(build)
     
   if(message.nil?)
     if response["status"] == "suceeded"
-      message = {"html"=>"<p>Build Status: #{response['status'].capitalize}</p><p>App Name: #{build['heroku_appname']}</p><p> Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy #{response['status']}", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+      message = {"html"=>"<p>Build Status: #{response['status'].capitalize}</p><p>App Name: #{build['heroku_appname']}</p><p> Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Deployed At: #{Time.parse(response['created_at'])}</p>", "subject"=>"Deploy #{response['status']}", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     else
-      message = {"html"=>"<p>Build Status: #{response['status'].capitalize}</p><p>App Name: #{build['heroku_appname']}</p><p> Attempted Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy #{response['status']}", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+      message = {"html"=>"<p>Build Status: #{response['status'].capitalize}</p><p>App Name: #{build['heroku_appname']}</p><p> Attempted Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Last Deployed At: #{Time.parse(response['created_at'])}</p>", "subject"=>"Deploy #{response['status']}", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     end
   end
   result = $mandrill.messages.send message
