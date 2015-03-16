@@ -213,25 +213,24 @@ def check_build(build)
   }
 
   begin
-    releases = $heroku.get_releases(build['heroku_appname'])
-    last_rel = releases.body.last
-    release_time = Time.parse(last_rel["created_at"]).to_i
-    update_time = build["last_build"]/1000
-    puts "Update Time: #{update_time}"
-    puts "Release Time: #{release_time}"
+    start_time = Time.at(Time.now.to_i - (24*60*60)).to_datetime.rfc3339
+    end_time = Time.at(Time.now.to_i + (24*60*60)).to_datetime.rfc3339
+    url = "https://api.heroku.com/apps/#{build['heroku_appname']}/builds"
+    headers = {"Accept"=>"application/vnd.heroku+json;version=3", 
+                "Authorization"=>"Bearer #{ENV['HEROKU_API_KEY']}",
+                "Range"=>"started_at #{start_time}..#{end_time}"}
+    response = JSON.parse(RestClient.get url, headers).last
+    time_now = Time.now().to_i
+    created_at = Time.parse(response['created_at']).to_i
   rescue Exception => e
-    message = message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p>App Name: #{build['heroku_appname']}</p><p> Attempted Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+    message = {"html"=>"<p>Build Status: Was unable to obtain build status</p><p>App Name: #{build['heroku_appname']}</p><p> Attempted Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p>", "subject"=>"Deploy Undeterminate", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
   end
     
-  # url = "https://api.heroku.com/apps/#{build['heroku_appname']}/builds"
-  # response = JSON.parse(RestClient.get url, "Accept"=>"application/vnd.heroku+json;version=3").last
-  # time_now = Time.now().to_i
-  # created_at = Time.parse(response['created_at']).to_i
   if(message.nil?)
-    if release_time > update_time
-      message = {"html"=>"<p>Build Status: Successfull</p><p>App Name: #{build['heroku_appname']}</p><p> Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Successfull", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+    if response["status"] == "suceeded"
+      message = {"html"=>"<p>Build Status: #{response['status'].capitalize}</p><p>App Name: #{build['heroku_appname']}</p><p> Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy #{response['status']}", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     else
-      message = {"html"=>"<p>Build Status: Failed</p><p>App Name: #{build['heroku_appname']}</p><p> Attempted Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy Failed", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
+      message = {"html"=>"<p>Build Status: #{response['status'].capitalize}</p><p>App Name: #{build['heroku_appname']}</p><p> Attempted Commit: <a href='https://github.com/#{build['git_account']}/#{build['git_appname']}/commit/#{build['sha']}'>#{build['last_commit']}</a></p><p>Last Deployed At: #{last_rel['created_at']}</p>", "subject"=>"Deploy #{response['status']}", "from_email"=>"gheroku@liftoffllc.com", "to"=>email_arr}
     end
   end
   result = $mandrill.messages.send message
